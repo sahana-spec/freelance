@@ -1,0 +1,88 @@
+````yaml
+name: Deploy StudentSphere
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build website
+        run: npm run build -- --base=/${{ github.event.repository.name }}/
+
+      - name: Upload build
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy website
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+### 4. Save the file
+
+1. Click **Commit changes**.
+2. Keep the branch set to `main`.
+3. Confirm the commit.
+
+---
+
+## Step 4: Enable GitHub Pages
+
+After saving the file:
+
+1. Open your repository's **Settings**.
+2. In the left sidebar, click **Pages**.
+3. Under **Build and deployment**, find **Source**.
+4. Select **GitHub Actions**.
+
+You don't need to select a branch here.
+
+## Step 5: Check deployment
+
+1. Open the **Actions** tab in your repository.
+2. Click **Deploy StudentSphere**.
+3. Open the latest workflow run.
+4. Wait for both the `build` and `deploy` jobs to finish successfully. The first deployment can take a few minutes.
+
+If successful, your website should be available at:
+
+```text
+https://YOUR-USERNAME.github.io/StudentSphere/
+````
+
+Replace `YOUR-USERNAME` with your actual GitHub username.
+
+**Bro, do Step 3 first.** Once you've created and committed `deploy.yml`, tell me what you see in the Actions tab. If anything turns red, send me the error and we'll fix it.
