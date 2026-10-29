@@ -1,0 +1,103 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import {
+  LayoutDashboard, BookOpen, Code2, BriefcaseBusiness, CalendarDays, Users,
+  Search, Bell, ChevronDown, ArrowUpRight, ArrowRight, Plus, Check, Clock3,
+  Flame, Target, Sparkles, GraduationCap, Bookmark, ExternalLink, Menu, X,
+  CircleHelp, FileText, Trophy, Zap, MoreHorizontal, CheckCircle2, Trash2
+} from 'lucide-react';
+import './styles.css';
+
+const initialTasks = [
+  { id: 1, title: 'Revise SQL joins', meta: 'DBMS · Study session', time: '10:30 AM', done: true },
+  { id: 2, title: 'Solve 2 array problems', meta: 'DSA · Practice', time: '12:00 PM', done: false },
+  { id: 3, title: 'Update project README', meta: 'ConnectHub · Project', time: '4:00 PM', done: false },
+];
+const opportunities = [
+  { type: 'HACKATHON', title: 'Build for a better tomorrow', org: 'Student Innovation Challenge', mode: 'Online · Team event', deadline: 'Check official page', color: 'lavender', url: 'https://unstop.com/' },
+  { type: 'LEARNING', title: 'Developer learning paths', org: 'GitHub Education', mode: 'Student resources', deadline: 'Explore resources', color: 'mint', url: 'https://education.github.com/' },
+  { type: 'INTERNSHIP', title: 'Explore student internships', org: 'Internshala', mode: 'Multiple locations', deadline: 'Check listings', color: 'peach', url: 'https://internshala.com/' },
+];
+const problems = [
+  { title: 'Two Sum', topic: 'Arrays', level: 'Easy', done: true },
+  { title: 'Valid Parentheses', topic: 'Stack', level: 'Easy', done: true },
+  { title: 'Binary Search', topic: 'Searching', level: 'Easy', done: false },
+  { title: 'Maximum Subarray', topic: 'Arrays', level: 'Medium', done: false },
+];
+const navItems = [
+  { id: 'Overview', icon: LayoutDashboard },
+  { id: 'Study planner', icon: BookOpen },
+  { id: 'DSA tracker', icon: Code2 },
+  { id: 'Opportunities', icon: BriefcaseBusiness },
+  { id: 'Community', icon: Users },
+];
+function load(key, fallback) { try { const value = localStorage.getItem(key); return value ? JSON.parse(value) : fallback; } catch { return fallback; } }
+
+function App() {
+  const [active, setActive] = useState('Overview');
+  const [tasks, setTasks] = useState(() => load('ss_tasks', initialTasks));
+  const [doneProblems, setDoneProblems] = useState(() => load('ss_problems', problems.filter(p => p.done).map(p => p.title)));
+  const [savedOpps, setSavedOpps] = useState(() => load('ss_saved', []));
+  const [query, setQuery] = useState('');
+  const [showAdd, setShowAdd] = useState(false);
+  const [newTask, setNewTask] = useState('');
+  const [mobileNav, setMobileNav] = useState(false);
+  const [toast, setToast] = useState('');
+  const [chatInput, setChatInput] = useState('');
+  const [chatAnswer, setChatAnswer] = useState('');
+  const [goal, setGoal] = useState('Prepare for placements');
+  const [plan, setPlan] = useState(false);
+  useEffect(() => localStorage.setItem('ss_tasks', JSON.stringify(tasks)), [tasks]);
+  useEffect(() => localStorage.setItem('ss_problems', JSON.stringify(doneProblems)), [doneProblems]);
+  useEffect(() => localStorage.setItem('ss_saved', JSON.stringify(savedOpps)), [savedOpps]);
+  const completed = tasks.filter(t => t.done).length;
+  const filteredOpps = useMemo(() => opportunities.filter(o => (o.title + o.org + o.type).toLowerCase().includes(query.toLowerCase())), [query]);
+  const notify = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2400); };
+  const toggleTask = id => setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  const addTask = e => { e.preventDefault(); if (!newTask.trim()) return; setTasks(prev => [...prev, { id: Date.now(), title: newTask.trim(), meta: 'Personal · To-do', time: 'Anytime', done: false }]); setNewTask(''); setShowAdd(false); notify('Task added to your planner'); };
+  const toggleProblem = title => setDoneProblems(prev => prev.includes(title) ? prev.filter(x => x !== title) : [...prev, title]);
+  const toggleSaved = title => setSavedOpps(prev => prev.includes(title) ? prev.filter(x => x !== title) : [...prev, title]);
+  const askAssistant = e => { e.preventDefault(); if (!chatInput.trim()) return; const q = chatInput.trim(); setChatAnswer(`Here's a simple way to start with “${q}”:\\n\\n1. Break the topic into smaller concepts.\\n2. Spend 20 minutes learning one concept.\\n3. Practise it with a small example.\\n4. Write down what you found difficult and revisit it tomorrow.\\n\\nThis is a demo response. Connect an AI API to enable real, topic-specific answers.`); setChatInput(''); };
+  const pageTitle = active === 'Overview' ? 'Your space to grow.' : active;
+  const pageSubtitle = active === 'Overview' ? 'A little progress every day adds up.' : ({'Study planner':'Make space for focused learning.','DSA tracker':'Keep your practice consistent.','Opportunities':'Find your next chance to grow.','Community':'Learn better, together.'}[active] || 'Your student workspace');
+  return <div className="app-shell">
+    <aside className={`sidebar ${mobileNav ? 'sidebar-open' : ''}`}>
+      <div className="brand"><div className="brand-mark"><GraduationCap size={22}/></div><span>student<span className="brand-light">sphere</span><i>.</i></span><button className="mobile-close" onClick={()=>setMobileNav(false)}><X size={19}/></button></div>
+      <div className="workspace-label">WORKSPACE</div>
+      <nav>{navItems.map(item => <button key={item.id} className={`nav-item ${active===item.id?'active':''}`} onClick={()=>{setActive(item.id);setMobileNav(false)}}><item.icon size={18}/><span>{item.id}</span>{item.id==='Opportunities'&&<span className="nav-count">3</span>}</button>)}</nav>
+      <div className="sidebar-bottom">
+        <div className="upgrade-card"><div className="upgrade-icon"><Sparkles size={17}/></div><strong>Make your goals happen.</strong><p>Your next chapter starts with one small step.</p><button onClick={()=>{setActive('Study planner');notify('Let’s plan your next study session')}}>Plan my week <ArrowRight size={14}/></button></div>
+        <button className="help-link" onClick={()=>notify('Tip: start with one small goal today.')}><CircleHelp size={17}/> Help & tips</button>
+        <div className="profile-mini"><div className="avatar">S</div><div className="profile-text"><strong>Student account</strong><span>Keep learning ✨</span></div><MoreHorizontal size={18}/></div>
+      </div>
+    </aside>
+    {mobileNav&&<div className="scrim" onClick={()=>setMobileNav(false)}/>}
+    <main className="main-area">
+      <header className="topbar"><button className="mobile-menu" onClick={()=>setMobileNav(true)}><Menu size={21}/></button><div className="breadcrumb">Workspace <span>/</span> <strong>{active}</strong></div><div className="top-actions"><label className="search-box"><Search size={17}/><input placeholder="Search your space..." value={query} onChange={e=>setQuery(e.target.value)} /><kbd>⌘ K</kbd></label><button className="icon-button" onClick={()=>notify('You’re all caught up!')} aria-label="Notifications"><Bell size={18}/><i/></button><div className="top-avatar">S</div></div></header>
+      <div className="content-wrap">
+        <section className="page-heading"><div><div className="eyebrow"><span className="eyebrow-dot"/> YOUR STUDENT DASHBOARD</div><h1>{pageTitle}</h1><p>{pageSubtitle}</p></div><button className="date-pill"><CalendarDays size={16}/> Thursday, Oct 29 <ChevronDown size={15}/></button></section>
+        {active==='Overview'&&<>
+          <section className="hero-card"><div className="hero-copy"><div className="hero-tag"><Sparkles size={14}/> YOUR DAILY CHECK-IN</div><h2>Small steps.<br/><em>Big possibilities.</em></h2><p>You don’t have to figure it all out today. Just take the next step.</p><button className="hero-button" onClick={()=>setActive('Study planner')}>Plan my day <ArrowRight size={16}/></button></div><div className="hero-art"><div className="sun-orb"/><div className="art-card art-card-one"><div className="art-card-icon"><Target size={17}/></div><div><b>One goal at a time</b><span>Progress over perfection</span></div><CheckCircle2 size={18} className="art-check"/></div><div className="art-card art-card-two"><div className="mini-bars"><i/><i/><i/><i/><i/><i/><i/></div><div><b>You're building momentum</b><span>Keep showing up</span></div></div><div className="art-spark spark-one">✳</div><div className="art-spark spark-two">✦</div></div></section>
+          <section className="stats-grid"><Stat icon={CheckCircle2} label="Tasks completed" value={`${completed}/${tasks.length}`} note="Your day, your pace" tint="purple"/><Stat icon={Flame} label="Practice streak" value="3 days" note="Consistency is a superpower" tint="orange"/><Stat icon={Code2} label="DSA problems" value={String(doneProblems.length).padStart(2,'0')} note="Keep sharpening your skills" tint="green"/><Stat icon={Bookmark} label="Saved opportunities" value={String(savedOpps.length).padStart(2,'0')} note="Good things are ahead" tint="blue"/></section>
+          <section className="dashboard-grid"><div className="panel tasks-panel"><PanelHeader title="Today's focus" subtitle="A manageable plan is a good plan." action="View planner" onAction={()=>setActive('Study planner')}/><div className="task-progress"><div><span>Daily progress</span><strong>{tasks.length?Math.round(completed/tasks.length*100):0}%</strong></div><div className="progress-track"><span style={{width:`${tasks.length?completed/tasks.length*100:0}%`}}/></div></div><div className="task-list">{tasks.slice(0,4).map(t=><TaskRow key={t.id} task={t} onToggle={()=>toggleTask(t.id)}/>)}</div><button className="add-task" onClick={()=>setShowAdd(true)}><Plus size={16}/> Add a task</button></div>
+          <div className="panel assistant-panel"><div className="assistant-top"><div className="assistant-icon"><Sparkles size={19}/></div><div><div className="panel-title">Study buddy <span className="beta-badge">DEMO</span></div><p className="panel-subtitle">A little help when you're stuck.</p></div></div><div className="assistant-message"><div className="bot-avatar"><Sparkles size={15}/></div><div><strong>Hey there! 👋</strong><p>What are you working on today? I can help you break a big topic into smaller, more manageable steps.</p></div></div>{chatAnswer&&<div className="assistant-answer">{chatAnswer}</div>}<form className="assistant-input" onSubmit={askAssistant}><input value={chatInput} onChange={e=>setChatInput(e.target.value)} placeholder="e.g. Help me plan DSA revision..." /><button aria-label="Send message"><ArrowRight size={17}/></button></form><div className="assistant-foot"><span><span className="online-dot"/> Ready to help</span><span>Demo mode · No AI API connected</span></div></div></section>
+          <section className="panel opportunities-panel"><PanelHeader title="Opportunities for you" subtitle="A few places to explore your next move." action="Explore all" onAction={()=>setActive('Opportunities')}/><div className="opportunity-grid">{opportunities.slice(0,3).map(o=><OpportunityCard key={o.title} item={o} saved={savedOpps.includes(o.title)} onSave={()=>toggleSaved(o.title)}/>)}</div></section>
+          <section className="bottom-grid"><div className="panel roadmap-panel"><PanelHeader title="Your next chapter" subtitle="Keep your long-term goal in sight." action="Edit goal" onAction={()=>setPlan(!plan)}/>{plan&&<div className="goal-edit"><select value={goal} onChange={e=>setGoal(e.target.value)}><option>Prepare for placements</option><option>Become a frontend developer</option><option>Build my first portfolio</option><option>Get better at DSA</option></select><button onClick={()=>{setPlan(false);notify('Goal updated')}}>Save goal</button></div>}<div className="roadmap-content"><div className="roadmap-icon"><Trophy size={21}/></div><div className="roadmap-text"><span>YOUR CURRENT GOAL</span><h3>{goal}</h3><p>Focus on progress, not perfection. You’ve got this.</p><div className="roadmap-tags"><span>Learn</span><ArrowRight size={13}/><span>Practise</span><ArrowRight size={13}/><span>Build</span></div></div><div className="roadmap-ring"><span>01</span><small>STEP</small></div></div></div><div className="quote-card"><div className="quote-mark">“</div><p>You don't need to see the whole staircase. Just take the first step.</p><span>A LITTLE REMINDER FOR TODAY</span><div className="quote-decoration">✳</div></div></section>
+        </>}
+        {active==='Study planner'&&<><section className="panel full-panel"><PanelHeader title="Your study planner" subtitle="Add tasks, check them off, and keep moving." action="＋ New task" onAction={()=>setShowAdd(true)}/><div className="large-progress"><div><span>Tasks completed</span><strong>{completed} of {tasks.length}</strong></div><div className="progress-track"><span style={{width:`${tasks.length?completed/tasks.length*100:0}%`}}/></div></div><div className="task-list roomy">{tasks.map(t=><TaskRow key={t.id} task={t} onToggle={()=>toggleTask(t.id)} onDelete={()=>setTasks(prev=>prev.filter(x=>x.id!==t.id))}/>)}</div>{tasks.length===0&&<EmptyState title="A fresh start" text="Add your first task and make today count."/>}<button className="primary-button" onClick={()=>setShowAdd(true)}><Plus size={16}/> Add a task</button></section><div className="tip-banner"><Sparkles size={19}/><div><strong>Try a focused 25-minute session</strong><p>Choose one task, put distractions aside, and take a short break when you're done.</p></div></div></>}
+        {active==='DSA tracker'&&<><section className="stats-grid three-stats"><Stat icon={CheckCircle2} label="Problems solved" value={`${doneProblems.length}/${problems.length}`} note="Your practice library" tint="purple"/><Stat icon={Target} label="Topics to explore" value="4" note="One concept at a time" tint="green"/><Stat icon={Zap} label="Current focus" value="Arrays" note="Build strong fundamentals" tint="orange"/></section><section className="panel full-panel"><PanelHeader title="Practice list" subtitle="Tick a problem when you've solved it."/><div className="problem-table"><div className="problem-head"><span>PROBLEM</span><span>TOPIC</span><span>LEVEL</span><span>STATUS</span></div>{problems.map(p=><div className="problem-row" key={p.title}><div className="problem-name"><button className={`check-box ${doneProblems.includes(p.title)?'checked':''}`} onClick={()=>toggleProblem(p.title)}>{doneProblems.includes(p.title)&&<Check size={13}/>}</button><span>{p.title}</span></div><span className="topic-pill">{p.topic}</span><span className={`level ${p.level.toLowerCase()}`}>{p.level}</span><span className={`status-text ${doneProblems.includes(p.title)?'complete':''}`}>{doneProblems.includes(p.title)?'Completed':'To do'}</span></div>)}</div><p className="disclaimer">Demo problem list only. Your progress is saved in this browser.</p></section><div className="tip-banner"><Code2 size={19}/><div><strong>Consistency beats cramming</strong><p>Try revisiting a problem a few days after solving it to strengthen your understanding.</p></div></div></>}
+        {active==='Opportunities'&&<><div className="filter-row"><div><h2 className="section-heading">Explore what's possible</h2><p className="muted">Discover learning resources and places to find opportunities.</p></div><div className="filter-search"><Search size={16}/><input placeholder="Filter opportunities..." value={query} onChange={e=>setQuery(e.target.value)}/></div></div><div className="opportunity-grid large-opps">{filteredOpps.map(o=><OpportunityCard key={o.title} item={o} saved={savedOpps.includes(o.title)} onSave={()=>toggleSaved(o.title)}/>)}</div><div className="tip-banner"><ExternalLink size={19}/><div><strong>Always verify before applying</strong><p>Check eligibility, deadlines, and terms on the official website. Listings here are sample links, not verified live vacancies.</p></div></div></>}
+        {active==='Community'&&<><section className="community-hero"><div className="community-symbol"><Users size={28}/></div><div><div className="eyebrow">BETTER TOGETHER</div><h2>Your people are out there.</h2><p>Learning is easier when you can ask questions, share progress, and build things together.</p></div></section><div className="community-grid">{[{icon:Users,title:'Find a study group',text:'Team up with students learning the same subject.',tag:'STUDY TOGETHER'},{icon:Code2,title:'Build a project',text:'Find teammates, share ideas, and make something real.',tag:'MAKE THINGS'},{icon:BookOpen,title:'Share knowledge',text:'Exchange helpful resources and explain concepts.',tag:'LEARN OUT LOUD'}].map(c=><div className="panel community-card" key={c.title}><div className="community-card-icon"><c.icon size={20}/></div><span>{c.tag}</span><h3>{c.title}</h3><p>{c.text}</p><button className="text-action" onClick={()=>notify('Community features are planned for a future version.')}>Coming soon <ArrowRight size={15}/></button></div>)}</div><div className="tip-banner"><CircleHelp size={19}/><div><strong>This is the first version</strong><p>Community accounts, messaging, and moderation need a backend. This preview doesn't publish student posts or personal information.</p></div></div></>}
+        <footer className="footer"><span>© 2026 StudentSphere</span><span>Made for the next generation of learners <span className="footer-heart">♥</span></span><button onClick={()=>notify('Thanks for exploring StudentSphere!')}>Give feedback <ArrowUpRight size={13}/></button></footer>
+      </div>
+    </main>
+    {showAdd&&<div className="modal-backdrop" onClick={()=>setShowAdd(false)}><div className="modal" onClick={e=>e.stopPropagation()}><button className="modal-close" onClick={()=>setShowAdd(false)}><X size={18}/></button><div className="modal-icon"><Plus size={20}/></div><h2>Add a task</h2><p>Make your next step clear and achievable.</p><form onSubmit={addTask}><label htmlFor="task-name">Task name</label><input id="task-name" autoFocus value={newTask} onChange={e=>setNewTask(e.target.value)} placeholder="e.g. Practise binary search" maxLength={100}/><div className="modal-actions"><button type="button" className="secondary-button" onClick={()=>setShowAdd(false)}>Cancel</button><button type="submit" className="primary-button">Add task <ArrowRight size={15}/></button></div></form></div></div>}
+    {toast&&<div className="toast"><CheckCircle2 size={17}/>{toast}</div>}
+  </div>;
+}
+function Stat({icon:Icon,label,value,note,tint}) { return <div className="stat-card"><div className={`stat-icon ${tint}`}><Icon size={18}/></div><div className="stat-label">{label}</div><div className="stat-value">{value}</div><div className="stat-note">{note}</div></div>; }
+function PanelHeader({title,subtitle,action,onAction}) { return <div className="panel-header"><div><h2 className="panel-title">{title}</h2>{subtitle&&<p className="panel-subtitle">{subtitle}</p>}</div>{action&&<button className="panel-action" onClick={onAction}>{action} <ArrowUpRight size={14}/></button>}</div>; }
+function TaskRow({task,onToggle,onDelete}) { return <div className={`task-row ${task.done?'task-done':''}`}><button className={`check-box ${task.done?'checked':''}`} onClick={onToggle} aria-label={task.done?'Mark incomplete':'Mark complete'}>{task.done&&<Check size={13}/>}</button><div className="task-info"><strong>{task.title}</strong><span>{task.meta}</span></div><div className="task-time"><Clock3 size={13}/>{task.time}</div>{onDelete&&<button className="delete-task" onClick={onDelete} aria-label="Delete task"><Trash2 size={15}/></button>}</div>; }
+function OpportunityCard({item,saved,onSave}) { return <article className="opportunity-card"><div className={`opportunity-art ${item.color}`}><span className="opportunity-type">{item.type}</span><div className="opportunity-art-symbol">{item.type==='HACKATHON'?<Zap size={27}/>:item.type==='LEARNING'?<BookOpen size={27}/>:<BriefcaseBusiness size={27}/>}</div><button className={`save-button ${saved?'saved':''}`} onClick={onSave} aria-label={saved?'Remove bookmark':'Save opportunity'}><Bookmark size={16} fill={saved?'currentColor':'none'}/></button></div><div className="opportunity-body"><h3>{item.title}</h3><p className="opportunity-org">{item.org}</p><div className="opportunity-meta"><span><Users size={13}/>{item.mode}</span><span><CalendarDays size={13}/>{item.deadline}</span></div><a className="opportunity-link" href={item.url} target="_blank" rel="noreferrer">Explore official site <ExternalLink size={14}/></a></div></article>; }
+function EmptyState({title,text}) { return <div className="empty-state"><div><CheckCircle2 size={24}/></div><h3>{title}</h3><p>{text}</p></div>; }
+createRoot(document.getElementById('root')).render(<App/>);
